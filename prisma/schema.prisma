@@ -18,6 +18,109 @@ enum Status {
   INACTIVE
 }
 
+enum ProcessType {
+  LEAD
+  TICKET
+  CALL
+  TRANSFER
+  FOLLOW_UP
+}
+
+enum FormFieldType {
+  TEXT
+  NUMBER
+  BOOLEAN
+  DATE
+  DROPDOWN
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model FormDefinition {
+  id              String       @id @default(uuid())
+
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  processType     ProcessType  // 🔒 LEAD / TICKET / CALL etc.
+  name            String       // e.g. "Website Lead Form"
+  description     String?
+
+  isActive        Boolean      @default(true)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  fields          FormFieldDefinition[]
+
+  @@index([organizationId, processType])
+}
+
+model FormFieldDefinition {
+  id              String         @id @default(uuid())
+
+  organizationId  String
+  organization    Organization   @relation(fields: [organizationId], references: [id])
+
+  formId          String
+  form            FormDefinition @relation(fields: [formId], references: [id])
+
+  key             String         // e.g. "business_name"
+  label           String         // "Business Name"
+  type            FormFieldType
+  required        Boolean        @default(false)
+
+  options         Json?          // for DROPDOWN
+  order           Int
+
+  isSystem        Boolean        @default(false) // 🔒 system fields marker
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([formId, key])
+  @@index([organizationId])
+}
+
+model Lead {
+  id               String          @id @default(uuid())
+
+  // 🔒 Tenant isolation
+  organizationId   String
+  organization     Organization    @relation(fields: [organizationId], references: [id])
+
+  // 🔒 System-mandatory fields
+  name             String
+  phone            String
+
+  // 🔓 Dynamic data
+  data             Json?
+
+  // 🔒 Audit
+  createdByUserId  String
+  createdByUser    User @relation("LeadCreatedBy", fields: [createdByUserId], references: [id])
+  createdByRole    AccessLevel
+
+  // 🔒 Approval
+  approvalStatus   ApprovalStatus
+
+  approvedByUserId String?
+  approvedByUser   User? @relation("LeadApprovedBy", fields: [approvedByUserId], references: [id])
+  approvedAt       DateTime?
+  rejectionReason  String?
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([organizationId])
+  @@index([phone])
+  @@index([approvalStatus])
+}
+
 model Organization {
   id        String   @id @default(uuid())
   name      String
@@ -26,6 +129,11 @@ model Organization {
   users       User[]
   teams       Team[]
   departments Department[]
+
+    // 🔽 NEW BACK RELATIONS
+  formDefinitions      FormDefinition[]
+  formFieldDefinitions FormFieldDefinition[]
+  leads                Lead[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -64,6 +172,10 @@ model User {
   team        Team?       @relation("TeamMembers", fields: [teamId], references: [id])
 
   managedTeam Team?       @relation("TeamManager")
+
+    // 🔽 NEW BACK RELATIONS
+  createdLeads   Lead[] @relation("LeadCreatedBy")
+  approvedLeads  Lead[] @relation("LeadApprovedBy")
 
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
