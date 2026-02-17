@@ -12,14 +12,21 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
 
-    "plugins": [
-      { "name": "next" }
-    ]
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
+
+    "plugins": [{ "name": "next" }]
   },
   "include": [
     "next-env.d.ts",
     "app/**/*.ts",
     "app/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
     ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]

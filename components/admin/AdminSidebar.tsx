@@ -37,6 +37,13 @@ export default function AdminSidebar() {
           <Users size={18} />
           <span>Create Team</span>
         </Link>
+        <Link
+          href="/leads/create"
+          className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800"
+        >
+          <Users size={18} />
+          <span>Create Lead</span>
+        </Link>
       </nav>
     </aside>
   );

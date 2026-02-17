@@ -1,4 +1,4 @@
-//teleCRM/telecrm-frontend/lib/auth.ts
+//teleCRM_software/lib/auth.ts
 export function saveAuth(token: string, accessLevel: string) {
   localStorage.setItem("token", token);
   localStorage.setItem("accessLevel", accessLevel);
