@@ -1,7 +1,7 @@
 // telecrm-backend/src/auth/auth.controller.ts
 
 import { Body, Controller, Post, Get, UseGuards, Req } from "@nestjs/common";
-import { Request } from "express";
+import type { Request } from "express";
 
 import { AuthService } from "./auth.service";
 import { SignupDto } from "./dto/signup.dto";

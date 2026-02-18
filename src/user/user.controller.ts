@@ -9,7 +9,7 @@ import {
   Req,
   BadRequestException,
 } from '@nestjs/common';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { L1Guard } from '@/common/guards/l1.guard';

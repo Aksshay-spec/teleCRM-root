@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { ApproveLeadDto } from './dto/approve-lead.dto';
 import { ApprovalStatus, ProcessType } from '@prisma/client';
@@ -14,51 +14,84 @@ export class LeadService {
   constructor(private prisma: PrismaService) {}
 
   // 🔥 Create Lead with dynamic validation
+  // async createLead(dto: CreateLeadDto, user: any) {
+  //   const { organizationId, id: userId, accessLevel } = user;
+
+  //   // 1️⃣ Fetch active LEAD form
+  //   const form = await this.prisma.formDefinition.findFirst({
+  //     where: {
+  //       organizationId,
+  //       processType: ProcessType.LEAD,
+  //       isActive: true,
+  //     },
+  //     include: {
+  //       fields: true,
+  //     },
+  //   });
+
+  //   if (!form) {
+  //     throw new BadRequestException('No active LEAD form found');
+  //   }
+
+  //   // 2️⃣ Validate dynamic fields
+  //   const submittedData = dto.data || {};
+  //   for (const field of form.fields) {
+  //     const value = submittedData[field.key];
+
+  //     if (field.required && (value === undefined || value === null)) {
+  //       throw new BadRequestException(
+  //         `Field "${field.label}" is required`,
+  //       );
+  //     }
+
+  //     if (value !== undefined && value !== null) {
+  //       this.validateFieldType(field.type, value, field.options);
+  //     }
+  //   }
+
+  //   // 3️⃣ Create Lead
+  //   return this.prisma.lead.create({
+  //     data: {
+  //       name: dto.name,
+  //       phone: dto.phone,
+  //       data: submittedData,
+  //       organizationId,
+  //       createdByUserId: userId,
+  //       createdByRole: accessLevel,
+  //       approvalStatus: ApprovalStatus.PENDING,
+  //     },
+  //   });
+  // }
+
   async createLead(dto: CreateLeadDto, user: any) {
-    const { organizationId, id: userId, accessLevel } = user;
+    const userId = user.userId; // 🔥 FIXED
+    const organizationId = user.organizationId;
+    const accessLevel = user.accessLevel;
 
-    // 1️⃣ Fetch active LEAD form
-    const form = await this.prisma.formDefinition.findFirst({
-      where: {
-        organizationId,
-        processType: ProcessType.LEAD,
-        isActive: true,
-      },
-      include: {
-        fields: true,
-      },
-    });
-
-    if (!form) {
-      throw new BadRequestException('No active LEAD form found');
+    if (!organizationId) {
+      throw new BadRequestException('User not assigned to organization');
     }
 
-    // 2️⃣ Validate dynamic fields
-    const submittedData = dto.data || {};
-    for (const field of form.fields) {
-      const value = submittedData[field.key];
-
-      if (field.required && (value === undefined || value === null)) {
-        throw new BadRequestException(
-          `Field "${field.label}" is required`,
-        );
-      }
-
-      if (value !== undefined && value !== null) {
-        this.validateFieldType(field.type, value, field.options);
-      }
+    if (!userId) {
+      throw new BadRequestException('Invalid user context');
     }
 
-    // 3️⃣ Create Lead
     return this.prisma.lead.create({
       data: {
         name: dto.name,
         phone: dto.phone,
-        data: submittedData,
-        organizationId,
-        createdByUserId: userId,
+        data: dto.data || {},
         createdByRole: accessLevel,
         approvalStatus: ApprovalStatus.PENDING,
+
+        // 🔥 relational style (correct Prisma way)
+        organization: {
+          connect: { id: organizationId },
+        },
+
+        createdByUser: {
+          connect: { id: userId },
+        },
       },
     });
   }
@@ -110,11 +143,7 @@ export class LeadService {
   }
 
   // 🔥 Approve / Reject Lead
-  async approveLead(
-    leadId: string,
-    dto: ApproveLeadDto,
-    user: any,
-  ) {
+  async approveLead(leadId: string, dto: ApproveLeadDto, user: any) {
     const lead = await this.prisma.lead.findFirst({
       where: {
         id: leadId,
@@ -137,9 +166,7 @@ export class LeadService {
         approvedByUserId: user.id,
         approvedAt: new Date(),
         rejectionReason:
-          dto.status === ApprovalStatus.REJECTED
-            ? dto.rejectionReason
-            : null,
+          dto.status === ApprovalStatus.REJECTED ? dto.rejectionReason : null,
       },
     });
   }

@@ -6,7 +6,7 @@ import { getToken, clearAuth } from './auth';
 /**
  * Base API URL
  */
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Axios Instance

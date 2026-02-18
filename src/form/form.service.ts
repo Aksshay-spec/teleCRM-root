@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateFormDto } from './dto/create-form.dto';
 import { AddFieldDto } from './dto/add-field.dto';
 
@@ -42,7 +42,8 @@ export class FormService {
 
     // Ensure unique key per form
     const existingKey = await this.prisma.formFieldDefinition.findFirst({
-      where: { formDefinitionId: formId, key: dto.key },
+      where: { formId: formId, key: dto.key },
+
     });
 
     if (existingKey) {
@@ -61,7 +62,7 @@ export class FormService {
     return this.prisma.formFieldDefinition.create({
       data: {
         ...dto,
-        formDefinitionId: formId,
+        formId: formId,
         organizationId,
       },
     });

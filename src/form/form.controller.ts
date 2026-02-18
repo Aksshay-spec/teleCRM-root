@@ -10,9 +10,9 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { Request } from 'express';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
-import { L1Guard } from '@/common/guards/l1.guard';
+import type { Request } from 'express';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { L1Guard } from '../common/guards/l1.guard';
 import { FormService } from './form.service';
 import { CreateFormDto } from './dto/create-form.dto';
 import { AddFieldDto } from './dto/add-field.dto';
